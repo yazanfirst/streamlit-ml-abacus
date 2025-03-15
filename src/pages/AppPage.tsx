@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AnimatedButton from "@/components/ui/AnimatedButton";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 const AppPage = () => {
   const navigate = useNavigate();
