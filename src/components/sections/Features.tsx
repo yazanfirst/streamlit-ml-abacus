@@ -1,6 +1,5 @@
-
 import React from "react";
-import Card from "../ui/Card";
+import CustomCard from "../ui/Card";
 import FadeIn from "../animations/FadeIn";
 
 const features = [
@@ -51,7 +50,8 @@ const features = [
     description: "Choose from a variety of machine learning models including Random Forest, XGBoost, SVM, and more for your classification tasks.",
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-        <path d="M12 2a3 3 0 0 0-3 3c0 1.1.6 2.1 1.5 2.6l-4.9 7.6a3 3 0 0 0-1.1-.2 3 3 0 1 0 3 3c0-1.1-.6-2.1-1.5-2.6l4.9-7.6c.4.1.7.1 1.1.1a3 3 0 1 0 0-6z" />
+        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+        <circle cx="12" cy="12" r="3" />
       </svg>
     ),
   },
@@ -98,7 +98,7 @@ const Features = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
             <FadeIn key={index} direction="up" delay={0.1 * index}>
-              <Card className="p-6 h-full" bordered>
+              <CustomCard className="p-6 h-full" bordered>
                 <div className="flex flex-col h-full">
                   <div className="rounded-full w-12 h-12 bg-accent/10 text-accent flex items-center justify-center mb-4">
                     {feature.icon}
@@ -106,7 +106,7 @@ const Features = () => {
                   <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
                   <p className="text-muted-foreground">{feature.description}</p>
                 </div>
-              </Card>
+              </CustomCard>
             </FadeIn>
           ))}
         </div>

@@ -31,18 +31,28 @@ const AppPage = () => {
       
       <main className="flex-1 p-6 md:p-12">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center py-24">
+          <div className="text-center py-8">
             <h1 className="text-3xl md:text-4xl font-bold mb-6">
               ML Abacus App
             </h1>
             <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-              This is a placeholder for the Streamlit ML app. In a real implementation, 
-              this would be integrated with a Streamlit application that allows users to
-              upload CSV files, clean data, analyze, and train ML models.
+              Upload CSV files, clean data, analyze, and train ML models with our Streamlit application.
             </p>
-            <div className="p-8 border border-border rounded-xl bg-card inline-block">
-              <p className="text-muted-foreground">Streamlit ML application would be embedded here</p>
-            </div>
+          </div>
+          
+          <div className="w-full h-[800px] border border-border rounded-xl overflow-hidden">
+            <iframe 
+              src="http://localhost:8501" 
+              title="ML Abacus Streamlit App"
+              className="w-full h-full"
+            />
+          </div>
+          
+          <div className="mt-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              Note: To use this application, make sure to run the Streamlit server with:<br />
+              <code className="bg-muted p-1 rounded">streamlit run src/ml_abacus_app.py</code>
+            </p>
           </div>
         </div>
       </main>

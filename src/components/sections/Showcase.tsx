@@ -1,13 +1,12 @@
-
 import React from "react";
 import FadeIn from "../animations/FadeIn";
-import Card from "../ui/Card";
+import CustomCard from "../ui/CustomCard";
 
 const showcaseSteps = [
   {
     title: "Upload & Preview Data",
     description: "Upload your CSV file and instantly preview your data to ensure it's correctly formatted.",
-    image: "step1.png", // We'll use a placeholder for now
+    image: "step1.png",
   },
   {
     title: "Clean & Preprocess",
@@ -69,7 +68,7 @@ const Showcase = () => {
                 </div>
                 
                 <div className={index % 2 === 0 ? "lg:order-2" : "lg:order-1"}>
-                  <Card className="overflow-hidden" glassmorphic>
+                  <CustomCard className="overflow-hidden" glassmorphic>
                     <div className="relative aspect-video bg-muted">
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center">
@@ -80,15 +79,6 @@ const Showcase = () => {
                       </div>
                       <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-primary/5"></div>
                     </div>
-                  </Card>
-                </div>
-              </div>
-            </FadeIn>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
+                  </CustomCard>
 
-export default Showcase;
+
