@@ -469,9 +469,12 @@ if uploaded_file is not None:
                     outlier_summary.append({
                         'Column': col,
                         'Outliers Count': details['combined_count'],
-                        'Percentage': f"{details['combined_percent']:.2f}%"
+                        'Percentage': f"{details['combined_percent']:.2f}%",
+                        'Z-score Outliers': details['z_score_count'],
+                        'IQR Outliers': details['iqr_count']
                     })
                 
+                st.write("Outliers detected using both Z-score (>3 std) and IQR (outside Q1-1.5*IQR and Q3+1.5*IQR) methods:")
                 st.dataframe(pd.DataFrame(outlier_summary))
                 
                 # Offer fixes
@@ -514,6 +517,19 @@ if uploaded_file is not None:
                     ax2.set_title(f'Distribution of {col_to_visualize}')
                     
                     st.pyplot(fig)
+                    
+                    # Highlight outliers in the dataset preview
+                    if st.checkbox("Highlight outliers in dataset"):
+                        selected_col = col_to_visualize
+                        Q1 = data[selected_col].quantile(0.25)
+                        Q3 = data[selected_col].quantile(0.75)
+                        IQR = Q3 - Q1
+                        lower_bound = Q1 - 1.5 * IQR
+                        upper_bound = Q3 + 1.5 * IQR
+                        
+                        outlier_mask = (data[selected_col] < lower_bound) | (data[selected_col] > upper_bound)
+                        st.write(f"Showing rows with outliers in '{selected_col}':")
+                        st.dataframe(data[outlier_mask].head(10))
             else:
                 st.success("No significant outliers detected.")
             
@@ -521,6 +537,12 @@ if uploaded_file is not None:
             st.subheader("Duplicate Rows")
             if report['duplicates']:
                 st.write(f"Found {report['duplicates']['count']} duplicate rows ({report['duplicates']['percent']:.2f}% of data).")
+                
+                if st.button("Show Sample Duplicates"):
+                    st.write("Sample of duplicate rows:")
+                    duplicate_indices = report['duplicates']['first_few']
+                    if duplicate_indices:
+                        st.dataframe(data.loc[duplicate_indices])
                 
                 if st.button("Remove Duplicates"):
                     data, message = fix_duplicates(data)
@@ -534,12 +556,22 @@ if uploaded_file is not None:
             st.subheader("Inconsistent Formats")
             if report['inconsistent_formats']:
                 st.write("The following columns have inconsistent formats:")
+                format_issues = []
                 for col, details in report['inconsistent_formats'].items():
-                    st.write(f"- **{col}**: {details['type']}")
                     if details['type'] == 'date_format':
-                        st.write(f"  Found formats: {', '.join(details['formats'])}")
+                        format_issues.append({
+                            'Column': col,
+                            'Issue Type': 'Date Format',
+                            'Details': ', '.join(details['formats'])
+                        })
                     elif details['type'] == 'text_case':
-                        st.write(f"  Found cases: {', '.join(details['cases'].keys())}")
+                        format_issues.append({
+                            'Column': col,
+                            'Issue Type': 'Text Case',
+                            'Details': ', '.join(details['cases'].keys())
+                        })
+                
+                st.dataframe(pd.DataFrame(format_issues))
                 
                 # Offer text case standardization
                 text_cols = [col for col, details in report['inconsistent_formats'].items() 
@@ -574,11 +606,20 @@ if uploaded_file is not None:
             if report['incorrect_data_types']:
                 type_issues = []
                 for col, details in report['incorrect_data_types'].items():
-                    type_issues.append({
-                        'Column': col,
-                        'Current Type': details['current_type'],
-                        'Suggested Type': details['suggested_type']
-                    })
+                    if details['suggested_type'] == 'numeric':
+                        type_issues.append({
+                            'Column': col,
+                            'Current Type': details['current_type'],
+                            'Suggested Type': details['suggested_type'],
+                            'Convertible %': f"{details['convertible_percent']:.1f}%"
+                        })
+                    else:
+                        type_issues.append({
+                            'Column': col,
+                            'Current Type': details['current_type'],
+                            'Suggested Type': details['suggested_type'],
+                            'Unique Values': details['unique_values']
+                        })
                 
                 st.dataframe(pd.DataFrame(type_issues))
                 
@@ -602,34 +643,92 @@ if uploaded_file is not None:
             # Invalid Values
             st.subheader("Invalid Values")
             if report['invalid_values']:
-                st.write("The following columns have potentially invalid values:")
+                invalid_summary = []
                 for col, details in report['invalid_values'].items():
                     if 'issue' in details and details['issue'] == 'negative_values':
-                        st.write(f"- **{col}**: {details['count']} negative values ({details['percent']:.2f}% of data)")
-                        if 'examples' in details:
-                            st.write(f"  Examples: {details['examples']}")
+                        invalid_summary.append({
+                            'Column': col,
+                            'Issue': 'Negative Values',
+                            'Count': details['count'],
+                            'Percentage': f"{details['percent']:.2f}%",
+                            'Examples': str(details.get('examples', []))[:30] + "..." if details.get('examples') else ""
+                        })
                     
                     if 'zero_count' in details:
-                        st.write(f"- **{col}**: {details['zero_count']} zero values ({details['zero_percent']:.2f}% of data)")
+                        invalid_summary.append({
+                            'Column': col,
+                            'Issue': 'Zero Values',
+                            'Count': details['zero_count'],
+                            'Percentage': f"{details['zero_percent']:.2f}%",
+                            'Examples': "0"
+                        })
+                
+                st.dataframe(pd.DataFrame(invalid_summary))
+                
+                # Offer to view specific examples
+                if invalid_summary:
+                    col_to_inspect = st.selectbox(
+                        "Select column to view invalid values:",
+                        list(set([item['Column'] for item in invalid_summary]))
+                    )
+                    
+                    issue_type = next((item['Issue'] for item in invalid_summary if item['Column'] == col_to_inspect), None)
+                    
+                    if issue_type == 'Negative Values':
+                        st.write(f"Rows with negative values in {col_to_inspect}:")
+                        st.dataframe(data[data[col_to_inspect] < 0].head(10))
+                    elif issue_type == 'Zero Values':
+                        st.write(f"Rows with zero values in {col_to_inspect}:")
+                        st.dataframe(data[data[col_to_inspect] == 0].head(10))
             else:
                 st.success("No invalid values detected.")
-        
-        # Step 3: Data Cleaning
-        st.header("🧹 Step 3: Data Cleaning")
-        
-        # Show missing values
-        missing_values = data.isnull().sum()
-        if missing_values.sum() > 0:
-            st.subheader("Missing Values")
-            st.write(missing_values[missing_values > 0])
             
-            if st.button("Drop Missing Values"):
-                data = data.dropna()
-                st.session_state.data = data
-                st.success(f"✅ Missing values dropped. New shape: {data.shape}")
-                st.dataframe(data.head())
-        else:
-            st.success("✅ No missing values found in the dataset.")
+            # Column Mismatch
+            st.subheader("Column Mismatch")
+            missing_cols = report['column_mismatch']['missing']
+            if missing_cols:
+                st.warning(f"Missing commonly expected columns: {', '.join(missing_cols)}")
+            else:
+                st.success("No missing common columns detected.")
+            
+            # Overall Quality Score
+            st.subheader("Data Quality Score")
+            
+            # Calculate a simple quality score based on issues found
+            issue_weights = {
+                'missing_values': 2.0 if not report['missing_values'].empty else 0,
+                'outliers': 1.0 if report['outliers'] else 0,
+                'duplicates': 1.5 if report['duplicates'] else 0,
+                'inconsistent_formats': 1.0 if report['inconsistent_formats'] else 0,
+                'incorrect_data_types': 1.5 if report['incorrect_data_types'] else 0,
+                'invalid_values': 2.0 if report['invalid_values'] else 0,
+                'column_mismatch': 0.5 if missing_cols else 0
+            }
+            
+            total_issues = sum(issue_weights.values())
+            max_issues = sum([weight for weight in issue_weights.values() if isinstance(weight, (int, float))])
+            
+            if max_issues > 0:
+                quality_score = 100 * (1 - (total_issues / 9.5))  # 9.5 is the max possible issues weight
+                
+                # Display quality gauge
+                st.write(f"Overall Data Quality Score: {quality_score:.1f}%")
+                
+                # Color based on score
+                color = 'green' if quality_score >= 80 else 'orange' if quality_score >= 60 else 'red'
+                st.markdown(f"""
+                    <div style="background-color: {color}; width: {quality_score}%; height: 20px; border-radius: 10px;"></div>
+                """, unsafe_allow_html=True)
+                
+                if quality_score < 60:
+                    st.error("⚠️ Your data requires significant cleaning before modeling.")
+                elif quality_score < 80:
+                    st.warning("⚠️ Your data would benefit from some cleaning before modeling.")
+                else:
+                    st.success("✅ Your data is relatively clean and ready for modeling.")
+        
+        # Step 3: Data Cleaning (moved to data quality assessment)
+        # Step now handled within the data quality assessment reports
         
         # Step 4: Exploratory Data Analysis (EDA)
         st.header("📊 Step 4: Exploratory Data Analysis")
