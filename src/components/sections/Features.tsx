@@ -1,5 +1,6 @@
+
 import React from "react";
-import CustomCard from "../ui/Card";
+import CustomCard from "../ui/CustomCard";
 import FadeIn from "../animations/FadeIn";
 
 const features = [

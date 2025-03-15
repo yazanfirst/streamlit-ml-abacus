@@ -1,3 +1,4 @@
+
 import React from "react";
 import FadeIn from "../animations/FadeIn";
 import CustomCard from "../ui/CustomCard";
@@ -80,5 +81,14 @@ const Showcase = () => {
                       <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-primary/5"></div>
                     </div>
                   </CustomCard>
+                </div>
+              </div>
+            </FadeIn>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
 
-
+export default Showcase;
