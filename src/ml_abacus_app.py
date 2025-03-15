@@ -18,17 +18,37 @@ import xgboost as XGBClassifier
 import io
 import base64
 
-# Set page configuration
+# Allow embedding in iframes
+# This must be the first Streamlit command
 st.set_page_config(
     page_title="ML Abacus - Machine Learning App",
     page_icon="📊",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="auto"
 )
+
+# Set custom headers to allow embedding
+def set_embed_headers():
+    import streamlit.components.v1 as components
+    from streamlit.web.server.server import Server
+    from streamlit.components.v1.components import html
+
+    # Only need to modify this header at this point
+    st.markdown("""
+        <style>
+            header {visibility: hidden;}
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+        </style>
+    """, unsafe_allow_html=True)
+
+set_embed_headers()
 
 # Main app header
 st.title("ML Abacus: Machine Learning Made Easy")
 st.markdown("### Upload your CSV, analyze data, and train ML models in minutes!")
 
+# ... keep existing code (all the ML Abacus app functionality)
 # Initialize session state for maintaining app state
 if 'data' not in st.session_state:
     st.session_state.data = None

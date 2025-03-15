@@ -1,10 +1,50 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AnimatedButton from "@/components/ui/AnimatedButton";
+import { toast } from "@/components/ui/sonner";
 
 const AppPage = () => {
   const navigate = useNavigate();
+  const [isStreamlitReady, setIsStreamlitReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Function to check if Streamlit server is running
+  const checkStreamlitServer = async () => {
+    try {
+      const response = await fetch('http://localhost:8501/healthz');
+      if (response.ok) {
+        setIsStreamlitReady(true);
+        setIsLoading(false);
+      } else {
+        setIsStreamlitReady(false);
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Failed to connect to Streamlit server:', error);
+      setIsStreamlitReady(false);
+      setIsLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    // Check Streamlit server status when component mounts
+    checkStreamlitServer();
+    
+    // Set up an interval to periodically check if the server becomes available
+    const intervalId = setInterval(checkStreamlitServer, 5000);
+    
+    // Clear interval on component unmount
+    return () => clearInterval(intervalId);
+  }, []);
+  
+  // Function to start Streamlit server
+  const handleStartStreamlit = () => {
+    toast.info(
+      "Please run the Streamlit server with the command: streamlit run src/ml_abacus_app.py",
+      { duration: 10000 }
+    );
+  };
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -40,12 +80,52 @@ const AppPage = () => {
             </p>
           </div>
           
-          <div className="w-full h-[800px] border border-border rounded-xl overflow-hidden">
-            <iframe 
-              src="http://localhost:8501" 
-              title="ML Abacus Streamlit App"
-              className="w-full h-full"
-            />
+          <div className="w-full h-[800px] border border-border rounded-xl overflow-hidden relative">
+            {isLoading ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-background">
+                <div className="flex flex-col items-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+                  <p className="text-muted-foreground">Checking Streamlit server status...</p>
+                </div>
+              </div>
+            ) : isStreamlitReady ? (
+              <iframe 
+                src="http://localhost:8501?embed=true" 
+                title="ML Abacus Streamlit App"
+                className="w-full h-full"
+                allow="camera;microphone"
+                sandbox="allow-same-origin allow-scripts allow-forms allow-downloads"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center bg-background">
+                <div className="flex flex-col items-center text-center p-8">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-destructive mb-4">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  <h3 className="text-xl font-semibold mb-2">Streamlit Server Not Detected</h3>
+                  <p className="text-muted-foreground mb-6 max-w-md">
+                    The Streamlit server is not running. Please start it using the command below:
+                  </p>
+                  <div className="bg-muted p-3 rounded-md mb-6 text-left font-mono text-sm overflow-x-auto w-full max-w-md">
+                    <code>streamlit run src/ml_abacus_app.py</code>
+                  </div>
+                  <AnimatedButton
+                    onClick={handleStartStreamlit}
+                    className="mb-4"
+                  >
+                    Show Instructions
+                  </AnimatedButton>
+                  <button 
+                    onClick={checkStreamlitServer} 
+                    className="text-primary underline text-sm"
+                  >
+                    Check Again
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           
           <div className="mt-8 text-center">
